@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from auth import get_user
 from auth.sessions.token import Token, TokenUtils
-from auth.user import User, verify_password
+from auth.user import User, verify_password, User2Self
 
 __all__ = [
     "router",
@@ -22,6 +22,6 @@ def login(session: SessionDep, form_data: OAuth2PasswordRequestForm = Depends())
     return TokenUtils.create_token(user)
 
 
-@router.get("/me", response_model=User)
+@router.get("/me", response_model=User2Self)
 def user_self(user: User = Depends(get_user)) -> User:
     return user

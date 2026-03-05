@@ -73,7 +73,7 @@ class User2Friends(BaseUser):
 class User2Self(BaseUser):
     id: uuid.UUID = Field(index=True)
     email: str
-    age: int | None
+    age: int | None = None
     is_active: bool
     created_at: datetime
 
