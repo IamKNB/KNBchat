@@ -3,6 +3,7 @@ from sqlmodel import Session, select
 
 from auth.user import User
 from myapp.modules.chat.schemas import Friendship, FriendshipApplySource
+from .block import is_blocked
 
 __all__ = [
     "FriendshipValidationError",
@@ -23,6 +24,7 @@ def create_friendship_request(
         session: Session,
         requester: User,
         addressee: User,
+        *,
         request_message: str | None = None,
         source: FriendshipApplySource = FriendshipApplySource.search,
 ) -> Friendship:
@@ -31,6 +33,9 @@ def create_friendship_request(
 
     if request_message is not None and len(request_message) > 200:
         raise FriendshipValidationError("request_message must be at most 200 characters")
+
+    if is_blocked(session, requester, addressee):
+        raise FriendshipValidationError("friendship request is blocked between these users")
 
     pair_key = Friendship.build_pair_key(requester.id, addressee.id)
     existing_pair_key = session.exec(

@@ -9,6 +9,7 @@ from db.through import UserPermissionGroupLink
 if TYPE_CHECKING:
     from auth.permissions import PermissionGroup
     from myapp.modules.chat import Friendship
+    from myapp.modules.chat import UserBlock
 
 __all__ = [
     "BaseUser",
@@ -49,6 +50,21 @@ class User(BaseUser, table=True):
         back_populates="addressee",
         sa_relationship_kwargs={
             "foreign_keys": "Friendship.addressee_id",
+            "lazy": "selectin",
+        },
+    )
+    # 拉黑
+    sent_blocks: list[UserBlock] = Relationship(
+        back_populates="blocker",
+        sa_relationship_kwargs={
+            "foreign_keys": "UserBlock.blocker_id",
+            "lazy": "selectin",
+        },
+    )
+    received_blocks: list[UserBlock] = Relationship(
+        back_populates="blocked",
+        sa_relationship_kwargs={
+            "foreign_keys": "UserBlock.blocked_id",
             "lazy": "selectin",
         },
     )

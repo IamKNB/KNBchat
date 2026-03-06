@@ -3,7 +3,7 @@
 from auth.permissions import PermissionGroup, Scope
 from auth.user import User
 from db.through import PermissionGroupScopesLink, UserPermissionGroupLink
-from myapp.modules.chat import Friendship
+from myapp.modules.chat import Friendship, UserBlock
 
 __all__ = [
     "User",
@@ -12,4 +12,5 @@ __all__ = [
     "UserPermissionGroupLink",
     "PermissionGroupScopesLink",
     "Friendship",
+    "UserBlock",
 ]
