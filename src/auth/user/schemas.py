@@ -8,6 +8,7 @@ from db.through import UserPermissionGroupLink
 
 if TYPE_CHECKING:
     from auth.permissions import PermissionGroup
+    from myapp.modules.chat import Friendship
 
 __all__ = [
     "BaseUser",
@@ -35,6 +36,22 @@ class User(BaseUser, table=True):
     age: int | None = None
     email: str = Field(index=True, unique=True)
     password: str
+
+    # 好友
+    sent_friendships: list[Friendship] = Relationship(
+        back_populates="requester",
+        sa_relationship_kwargs={
+            "foreign_keys": "Friendship.requester_id",
+            "lazy": "selectin",
+        },
+    )
+    received_friendships: list[Friendship] = Relationship(
+        back_populates="addressee",
+        sa_relationship_kwargs={
+            "foreign_keys": "Friendship.addressee_id",
+            "lazy": "selectin",
+        },
+    )
 
     # 权限与群组
     permission_groups: list["PermissionGroup"] = Relationship(back_populates="users",
