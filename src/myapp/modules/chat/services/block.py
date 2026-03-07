@@ -16,6 +16,36 @@ class BlockValidationError(ValueError):
     """Raised when block request inputs are invalid."""
 
 
+def _validate_block_pair(blocker: User, blocked: User) -> None:
+    if blocker.id == blocked.id:
+        raise BlockValidationError("blocker and blocked must be different")
+
+
+def _validate_reason(reason: str | None) -> None:
+    if reason is not None and len(reason) > 200:
+        raise BlockValidationError("reason must be at most 200 characters")
+
+
+def _get_block(session: Session, blocker: User, blocked: User) -> UserBlock | None:
+    return session.get(UserBlock, (blocker.id, blocked.id))
+
+
+def _persist_block(session: Session, block: UserBlock) -> UserBlock:
+    session.add(block)
+    session.commit()
+    session.refresh(block)
+    return block
+
+
+def _update_block_reason(
+        session: Session,
+        block: UserBlock,
+        reason: str | None,
+) -> UserBlock:
+    block.reason = reason
+    return _persist_block(session, block)
+
+
 def block_user(
         session: Session,
         blocker: User,
@@ -23,42 +53,27 @@ def block_user(
         *,
         reason: str | None = None,
 ) -> UserBlock:
-    if blocker.id == blocked.id:
-        raise BlockValidationError("blocker and blocked must be different")
+    _validate_block_pair(blocker, blocked)
+    _validate_reason(reason)
 
-    if reason is not None and len(reason) > 200:
-        raise BlockValidationError("reason must be at most 200 characters")
-
-    existing: UserBlock | None = session.get(UserBlock, (blocker.id, blocked.id))
+    existing = _get_block(session, blocker, blocked)
     if existing is not None:
-        existing.reason = reason
-        session.add(existing)
-        session.commit()
-        session.refresh(existing)
-        return existing
+        return _update_block_reason(session, existing, reason)
 
     block = UserBlock(
         blocker_id=blocker.id,
         blocked_id=blocked.id,
         reason=reason,
     )
-    session.add(block)
     try:
-        session.commit()
+        return _persist_block(session, block)
     except IntegrityError:
         session.rollback()
         # Idempotent under concurrent requests.
-        existing = session.get(UserBlock, (blocker.id, blocked.id))
+        existing = _get_block(session, blocker, blocked)
         if existing is not None:
-            existing.reason = reason
-            session.add(existing)
-            session.commit()
-            session.refresh(existing)
-            return existing
+            return _update_block_reason(session, existing, reason)
         raise
-
-    session.refresh(block)
-    return block
 
 
 def unblock_user(
@@ -66,7 +81,7 @@ def unblock_user(
         blocker: User,
         blocked: User,
 ) -> bool:
-    block = session.get(UserBlock, (blocker.id, blocked.id))
+    block = _get_block(session, blocker, blocked)
     if block is None:
         return False
 
@@ -81,6 +96,6 @@ def is_blocked(
         user_b: User,
 ) -> bool:
     return (
-            session.get(UserBlock, (user_a.id, user_b.id)) is not None
-            or session.get(UserBlock, (user_b.id, user_a.id)) is not None
+            _get_block(session, user_a, user_b) is not None
+            or _get_block(session, user_b, user_a) is not None
     )

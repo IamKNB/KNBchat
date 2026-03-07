@@ -6,8 +6,19 @@ from .block import (
 )
 from .friendship import (
     FriendshipConflictError,
+    FriendshipNotFoundError,
+    FriendshipPermissionError,
+    FriendshipStateError,
     FriendshipValidationError,
+    accept_friendship_request,
+    cancel_friendship_request,
     create_friendship_request,
+    get_friendship_between,
+    list_accepted_friendships,
+    list_incoming_pending_requests,
+    list_outgoing_pending_requests,
+    reject_friendship_request,
+    unfriend,
 )
 
 __all__ = [
@@ -17,5 +28,16 @@ __all__ = [
     "is_blocked",
     "FriendshipValidationError",
     "FriendshipConflictError",
+    "FriendshipNotFoundError",
+    "FriendshipPermissionError",
+    "FriendshipStateError",
+    "get_friendship_between",
     "create_friendship_request",
+    "accept_friendship_request",
+    "reject_friendship_request",
+    "cancel_friendship_request",
+    "unfriend",
+    "list_incoming_pending_requests",
+    "list_outgoing_pending_requests",
+    "list_accepted_friendships",
 ]

@@ -7,7 +7,9 @@ from sqlalchemy import Index
 from sqlmodel import Field, SQLModel, Relationship
 
 __all__ = [
+    "BaseFriendship",
     "Friendship",
+    "Friendship2Self",
     "FriendshipStatus",
     "FriendshipApplySource",
 ]
@@ -27,7 +29,15 @@ class FriendshipApplySource(str, Enum):
     other = "other"
 
 
-class Friendship(SQLModel, table=True):
+class BaseFriendship(SQLModel):
+    # 状态
+    status: FriendshipStatus = Field(default=FriendshipStatus.pending)
+    # 记录时间
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), nullable=False)
+    accepted_at: datetime | None = Field(default=None)
+
+
+class Friendship(BaseFriendship, table=True):
     __tablename__ = "friendship"
     __table_args__ = (
         Index(
@@ -47,11 +57,6 @@ class Friendship(SQLModel, table=True):
         unique=True,
         nullable=False,
     )
-    # 状态
-    status: FriendshipStatus = Field(default=FriendshipStatus.pending)
-    # 记录时间
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), nullable=False)
-    accepted_at: datetime | None = Field(default=None)
     # 申请消息
     request_message: str | None = Field(
         default=None,
@@ -81,3 +86,10 @@ class Friendship(SQLModel, table=True):
     def build_pair_key(requester_id: UUID, addressee_id: UUID) -> str:
         left, right = sorted((requester_id.hex, addressee_id.hex))
         return f"{left}:{right}"
+
+
+class Friendship2Self(BaseFriendship):
+    requester_id: UUID
+    addressee_id: UUID
+    source: FriendshipApplySource
+    request_message: str | None = None
