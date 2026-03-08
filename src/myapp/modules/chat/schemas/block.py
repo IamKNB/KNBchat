@@ -5,19 +5,23 @@ from uuid import UUID
 from sqlmodel import Field, SQLModel, Relationship
 
 __all__ = [
+    "BaseUserBlock",
     "UserBlock",
 ]
 if TYPE_CHECKING:
     from auth.user import User
 
 
-class UserBlock(SQLModel, table=True):
+class BaseUserBlock(SQLModel):
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), nullable=False)
+    reason: str | None = Field(default=None)
+
+
+class UserBlock(BaseUserBlock, table=True):
     __tablename__ = "user_block"
 
     blocker_id: UUID = Field(foreign_key="user.id", primary_key=True)
     blocked_id: UUID = Field(foreign_key="user.id", primary_key=True, index=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), nullable=False)
-    reason: str | None = Field(default=None, max_length=200)
 
     blocker: "User" = Relationship(
         back_populates="sent_blocks",
