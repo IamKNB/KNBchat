@@ -1,14 +1,15 @@
 from datetime import UTC, datetime
+from typing import NoReturn
 from uuid import UUID
 
 from sqlmodel import Session
 
 from auth.user import User
+from myapp.common.errors import raise_service_error
 from myapp.modules.chat.schemas import Friendship, FriendshipApplySource, FriendshipStatus
 from myapp.modules.chat.schemas.friendship_api import FriendshipDirection
 from myapp.modules.chat.services.block import is_blocked_by_ids
 
-from .errors import raise_friendship_service_error
 from .repo import (
     delete_friendship,
     get_friendship_by_pair_ids,
@@ -33,8 +34,8 @@ __all__ = [
 REQUEST_MESSAGE_MAX_LENGTH = 200
 
 
-def _raise_not_found() -> None:
-    raise_friendship_service_error(
+def _raise_not_found() -> NoReturn:
+    raise_service_error(
         status_code=404,
         code="friendship_not_found",
         message="friendship not found",
@@ -43,7 +44,7 @@ def _raise_not_found() -> None:
 
 def _validate_distinct_user_ids(user_a_id: UUID, user_b_id: UUID) -> None:
     if user_a_id == user_b_id:
-        raise_friendship_service_error(
+        raise_service_error(
             status_code=400,
             code="friendship_bad_request",
             message="invalid friendship request",
@@ -53,7 +54,7 @@ def _validate_distinct_user_ids(user_a_id: UUID, user_b_id: UUID) -> None:
 
 def _validate_request_message(request_message: str | None) -> None:
     if request_message is not None and len(request_message) > REQUEST_MESSAGE_MAX_LENGTH:
-        raise_friendship_service_error(
+        raise_service_error(
             status_code=400,
             code="request_message_too_long",
             message="invalid friendship request",
@@ -77,7 +78,7 @@ def _require_directional_friendship(
     if friendship is None:
         _raise_not_found()
     if friendship.requester_id != requester_id or friendship.addressee_id != addressee_id:
-        raise_friendship_service_error(
+        raise_service_error(
             status_code=403,
             code="friendship_forbidden",
             message="forbidden friendship operation",
@@ -98,7 +99,7 @@ def _require_pending_directional_friendship(
         addressee_id=addressee_id,
     )
     if friendship.status != FriendshipStatus.pending:
-        raise_friendship_service_error(
+        raise_service_error(
             status_code=409,
             code="friendship_state_conflict",
             message="friendship state conflict",
@@ -138,7 +139,7 @@ def create_friendship_request(
     _require_target_user_exists(session, addressee_id)
 
     if is_blocked_by_ids(session, actor_id, addressee_id):
-        raise_friendship_service_error(
+        raise_service_error(
             status_code=409,
             code="friendship_blocked",
             message="friendship request blocked",
@@ -147,7 +148,7 @@ def create_friendship_request(
 
     pair_low_id, pair_high_id = normalize_pair_ids(actor_id, addressee_id)
     if get_friendship_by_pair_ids(session, pair_low_id, pair_high_id) is not None:
-        raise_friendship_service_error(
+        raise_service_error(
             status_code=409,
             code="friendship_conflict",
             message="friendship conflict",
@@ -218,7 +219,7 @@ def remove_friendship(
     if friendship is None:
         _raise_not_found()
     if friendship.status != FriendshipStatus.accepted:
-        raise_friendship_service_error(
+        raise_service_error(
             status_code=409,
             code="friendship_state_conflict",
             message="friendship state conflict",

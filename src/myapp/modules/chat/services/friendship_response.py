@@ -1,9 +1,9 @@
 from uuid import UUID
 
 from auth.user import User2Friends, User2Public
+from myapp.common.api import CursorMeta
 from myapp.modules.chat.schemas import Friendship
 from myapp.modules.chat.schemas.friendship_api import (
-    CursorMeta,
     FriendshipAcceptedData,
     FriendshipAcceptedEnvelope,
     FriendshipAcceptedListEnvelope,

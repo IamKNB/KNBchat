@@ -1,19 +1,15 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any
 from uuid import UUID
 
 from sqlmodel import SQLModel
 
 from auth.user import User2Friends, User2Public
+from myapp.common.api import Envelope, ListEnvelope
 from .friendship import FriendshipApplySource, FriendshipStatus
 
 __all__ = [
-    "CURSOR_EXAMPLE",
     "CreateFriendshipRequestBody",
-    "CursorMeta",
-    "ErrorDetail",
-    "ErrorEnvelope",
     "FriendshipAcceptedData",
     "FriendshipAcceptedEnvelope",
     "FriendshipAcceptedListEnvelope",
@@ -22,14 +18,6 @@ __all__ = [
     "FriendshipPendingEnvelope",
     "FriendshipPendingListEnvelope",
 ]
-
-ErrorDetail = str | dict[str, Any] | list[dict[str, Any]] | None
-CURSOR_EXAMPLE = (
-    "eyJzb3J0X3RpbWUiOiIyMDI2LTAzLTA4VDAxOjAwOjAwKzAwOjAwIiwicGFpcl9sb3dfaWQiOiIx"
-    "MTExMTExMS0xMTExLTExMTEtMTExMS0xMTExMTExMTExMTEiLCJwYWlyX2hpZ2hfaWQiOiIyMjIy"
-    "MjIyMi0yMjIyLTIyMjItMjIyMi0yMjIyMjIyMjIyMjIifQ=="
-)
-
 
 class FriendshipDirection(str, Enum):
     incoming = "incoming"
@@ -61,38 +49,7 @@ class FriendshipAcceptedData(SQLModel):
     direction: FriendshipDirection
 
 
-class CursorMeta(SQLModel):
-    has_more: bool
-    next_cursor: str | None = None
-
-
-class ErrorEnvelope(SQLModel):
-    code: str
-    message: str
-    detail: ErrorDetail = None
-
-
-class FriendshipPendingEnvelope(SQLModel):
-    code: str
-    message: str
-    data: FriendshipPendingData
-
-
-class FriendshipAcceptedEnvelope(SQLModel):
-    code: str
-    message: str
-    data: FriendshipAcceptedData
-
-
-class FriendshipPendingListEnvelope(SQLModel):
-    code: str
-    message: str
-    data: list[FriendshipPendingData]
-    meta: CursorMeta
-
-
-class FriendshipAcceptedListEnvelope(SQLModel):
-    code: str
-    message: str
-    data: list[FriendshipAcceptedData]
-    meta: CursorMeta
+FriendshipPendingEnvelope = Envelope[FriendshipPendingData]
+FriendshipAcceptedEnvelope = Envelope[FriendshipAcceptedData]
+FriendshipPendingListEnvelope = ListEnvelope[FriendshipPendingData]
+FriendshipAcceptedListEnvelope = ListEnvelope[FriendshipAcceptedData]

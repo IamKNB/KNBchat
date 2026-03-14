@@ -1,10 +1,11 @@
 from typing import Any
 from uuid import UUID
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from auth.user import User
 from myapp.modules.chat.schemas import Friendship
+from myapp.modules.chat.services.pagination import apply_keyset_filter
 
 from .pagination import (
     KeysetAnchor,
@@ -97,21 +98,20 @@ def list_friendships_page(
     current_sort_expr = sort_time_expr(mode)
 
     statement = select(Friendship).where(*filters)
-    if anchor is not None:
-        statement = statement.where(
-            build_keyset_filter(
-                current_sort_expr=current_sort_expr,
-                anchor=anchor,
-            )
-        )
+    statement = apply_keyset_filter(
+        statement,
+        anchor,
+        build_keyset_filter,
+        current_sort_expr=current_sort_expr,
+    )
 
     statement = statement.order_by(
         current_sort_expr.desc(),
-        Friendship.pair_low_id.desc(),
-        Friendship.pair_high_id.desc(),
+        col(Friendship.pair_low_id).desc(),
+        col(Friendship.pair_high_id).desc(),
     ).limit(limit + 1)
 
-    rows = session.exec(statement).all()
+    rows = list(session.exec(statement))
     has_more = len(rows) > limit
     items = [_ensure_friendship_users_loaded(item) for item in rows[:limit]]
 

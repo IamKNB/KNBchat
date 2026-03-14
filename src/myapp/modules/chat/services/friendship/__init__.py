@@ -1,4 +1,3 @@
-from .errors import FriendshipServiceError
 from .service import (
     accept_friendship_request,
     cancel_friendship_request,
@@ -18,7 +17,6 @@ __all__ = [
     "DEFAULT_PAGE_LIMIT",
     "MAX_PAGE_LIMIT",
     "FriendshipPage",
-    "FriendshipServiceError",
     "accept_friendship_request",
     "cancel_friendship_request",
     "create_friendship_request",

@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from myapp.modules.chat.schemas import Friendship
+from myapp.modules.chat.services.pagination import DEFAULT_PAGE_LIMIT, MAX_PAGE_LIMIT
 
 __all__ = [
     "DEFAULT_PAGE_LIMIT",
@@ -9,9 +10,6 @@ __all__ = [
     "FriendshipListMode",
     "FriendshipPage",
 ]
-
-DEFAULT_PAGE_LIMIT = 20
-MAX_PAGE_LIMIT = 100
 
 
 class FriendshipListMode(str, Enum):

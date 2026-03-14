@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, Query, status
 from auth import get_user
 from auth.user import User
 from db import SessionDep
+from myapp.common.api import PaginationParams
 from myapp.modules.chat.api.errors.friendship import FRIENDSHIP_ERROR_RESPONSES, FriendshipRoute
 from myapp.modules.chat.schemas.friendship_api import (
-    CURSOR_EXAMPLE,
     CreateFriendshipRequestBody,
     FriendshipAcceptedEnvelope,
     FriendshipAcceptedListEnvelope,
@@ -15,8 +15,16 @@ from myapp.modules.chat.schemas.friendship_api import (
     FriendshipPendingEnvelope,
     FriendshipPendingListEnvelope,
 )
-from myapp.modules.chat.services import (
+from myapp.modules.chat.services.friendship.service import (
     accept_friendship_request,
+    cancel_friendship_request,
+    create_friendship_request,
+    list_accepted_friendships,
+    list_friendship_requests,
+    reject_friendship_request,
+    remove_friendship,
+)
+from myapp.modules.chat.services.friendship_response import (
     build_accept_friendship_response,
     build_cancel_friendship_response,
     build_create_friendship_response,
@@ -24,20 +32,9 @@ from myapp.modules.chat.services import (
     build_list_friendship_requests_response,
     build_reject_friendship_response,
     build_remove_friendship_response,
-    cancel_friendship_request,
-    create_friendship_request,
-    list_accepted_friendships as list_accepted_friendships_service,
-    list_friendship_requests as list_friendship_requests_service,
-    reject_friendship_request,
-    remove_friendship as remove_friendship_service,
 )
 
 __all__ = ["router"]
-
-CURSOR_DESCRIPTION = (
-    "Opaque keyset cursor from previous response `meta.next_cursor`. "
-    "Clients should pass through next_cursor directly."
-)
 
 router = APIRouter(
     prefix="/friendships",
@@ -64,31 +61,21 @@ def create_friendship(
 
 
 @router.get("/requests", response_model=FriendshipPendingListEnvelope)
-def list_friendship_requests(
+def list_friendship_requests_route(
         session: SessionDep,
         current_user: User = Depends(get_user),
         direction: FriendshipDirection = Query(
             default=FriendshipDirection.incoming,
             description="Request direction. Allowed: incoming, outgoing.",
         ),
-        cursor: str | None = Query(
-            default=None,
-            description=CURSOR_DESCRIPTION,
-            examples=[CURSOR_EXAMPLE],
-        ),
-        limit: int = Query(
-            default=20,
-            ge=1,
-            le=100,
-            description="Page size. Range: 1..100.",
-        ),
+        pagination: PaginationParams = Depends(),
 ) -> FriendshipPendingListEnvelope:
-    page = list_friendship_requests_service(
+    page = list_friendship_requests(
         session=session,
         actor=current_user,
         direction=direction,
-        cursor=cursor,
-        limit=limit,
+        cursor=pagination.cursor,
+        limit=pagination.limit,
     )
     return build_list_friendship_requests_response(
         page,
@@ -139,26 +126,16 @@ def cancel_friendship(
 
 
 @router.get("", response_model=FriendshipAcceptedListEnvelope)
-def list_accepted_friendships(
+def list_accepted_friendships_route(
         session: SessionDep,
         current_user: User = Depends(get_user),
-        cursor: str | None = Query(
-            default=None,
-            description=CURSOR_DESCRIPTION,
-            examples=[CURSOR_EXAMPLE],
-        ),
-        limit: int = Query(
-            default=20,
-            ge=1,
-            le=100,
-            description="Page size. Range: 1..100.",
-        ),
+        pagination: PaginationParams = Depends(),
 ) -> FriendshipAcceptedListEnvelope:
-    page = list_accepted_friendships_service(
+    page = list_accepted_friendships(
         session=session,
         actor=current_user,
-        cursor=cursor,
-        limit=limit,
+        cursor=pagination.cursor,
+        limit=pagination.limit,
     )
     return build_list_accepted_friendships_response(
         page,
@@ -167,12 +144,12 @@ def list_accepted_friendships(
 
 
 @router.delete("/{user_id}", response_model=FriendshipAcceptedEnvelope)
-def remove_friendship(
+def remove_friendship_route(
         user_id: UUID,
         session: SessionDep,
         current_user: User = Depends(get_user),
 ) -> FriendshipAcceptedEnvelope:
-    friendship = remove_friendship_service(
+    friendship = remove_friendship(
         session=session,
         actor=current_user,
         friend_user_id=user_id,
