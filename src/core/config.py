@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from functools import lru_cache
 from pathlib import Path
+from typing import AsyncIterator
 
 from fastapi import FastAPI
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -31,11 +32,13 @@ class Settings(BaseSettings):
 
 # noinspection PyUnusedLocal
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from db import init_db, dispose_db
     init_db()
-    yield
-    dispose_db()
+    try:
+        yield
+    finally:
+        dispose_db()
 
 
 # 从缓存中获取settings
