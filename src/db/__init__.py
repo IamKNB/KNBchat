@@ -1,8 +1,8 @@
-from ._db import engine,SessionDep
+from ._db import SessionDep, get_engine
 from .init import init_db, dispose_db
 
 __all__ = [
-    "engine",
+    "get_engine",
     "SessionDep",
     "init_db",
     "dispose_db",

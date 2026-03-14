@@ -6,12 +6,11 @@ from pwdlib import PasswordHash
 from core.config import get_settings
 
 password_hasher = PasswordHash.recommended()
-settings = get_settings()
 
 
 class Password:
     @staticmethod
-    def hash(password):
+    def hash(password: str) -> str:
         return password_hasher.hash(password)
 
     @staticmethod
@@ -24,9 +23,11 @@ class Password:
 class JWT:
     @staticmethod
     def decode(jwt_token: str) -> dict[str, Any]: #todo:检查这个返回值Any,是否可以写作str
+        settings = get_settings()
         return jwt.decode(jwt_token, settings.jwt_secret_key, algorithms=settings.jwt_algorithm,
                           options={"require": ["sub", "exp"]}, leeway=30, )
 
     @staticmethod
-    def encode(to_encode: dict) -> str:
+    def encode(to_encode: dict[str, Any]) -> str:
+        settings = get_settings()
         return jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
