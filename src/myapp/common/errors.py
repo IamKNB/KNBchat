@@ -88,7 +88,7 @@ def build_error_responses(envelope_model: Type[ErrorEnvelope]) -> dict[int | str
             "model": envelope_model,
             "description": "Conflict",
         },
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "model": envelope_model,
             "description": "Validation error",
         },
