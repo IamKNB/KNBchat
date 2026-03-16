@@ -315,7 +315,7 @@ wheels = [
 [[package]]
 name = "knbchat"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "fastapi", extra = ["standard-no-fastapi-cloud-cli"] },
     { name = "pwdlib", extra = ["argon2"] },
